@@ -90,7 +90,7 @@ Make sure you have `go` and the `fortune` database installed on your system:
 Clone the repository:
 
 ```
-git clone https://github.com/sahadebojyoti09-lang/terminal-pet.git
+git clone https://github.com/HonourableAF/terminal-pet.git
 ```
 Move into the project directory:
 
