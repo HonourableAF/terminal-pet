@@ -1,69 +1,77 @@
 # 🐾 Puchi - The Ultimate Terminal Pet
 
-
-An interactive, keyboard-driven retro tamagotchi clone built entirely inside the terminal using Go (`Bubble Tea` & `LipGloss`). Puchi features live state machines, dynamic string geometry, dynamic weights, and an internal automation engine.
+An interactive, keyboard-driven retro tamagotchi clone built entirely inside the terminal using Go (`Bubble Tea` & `LipGloss`). Puchi has live stats, a state machine, an autopilot ("Loaf Mode"), a wardrobe, and he **remembers you** - his state is saved between sessions, and he notices when you've been away.
 
 ## 📸 System Preview
 
-<p align="center">
-  <img src="puchi.png" alt="Terminal Pet Puchi Interface Screenshot" width="750px">
-</p>
-<p align="center"><em>Puchi, running optimized in a custom terminal environment.</em></p>
+[![Terminal Pet Puchi Interface Screenshot](puchi.png)](puchi.png)
 
----
+*Puchi, running optimized in a custom terminal environment.*
 
 ---
 
 ## 🛠️ Operational Core Metrics
 
-Puchi's life cycle operates across four balancing system registers that shift over time via background system ticks:
+Puchi's life cycle runs on a 3-second heartbeat:
 
-| Stat | Mechanics | Impact |
-| :--- | :--- | :--- |
-| **Hunger** | Increases by +3% every 3 seconds. | Exceeding 70% drops happiness and forces a "Miserable" state. |
-| **Happiness** | Decreases by -2% every 3 seconds. | Drops down based on high hunger or forced execution wakeups. |
-| **Energy** | Decreases by -5% every 6 seconds. | Hitting 0% forces an immediate system collapse into deep sleep. |
-| **Cache Buffer** | Increments with each food unit. | Reaching 100 units triggers a system panic / operation lock. |
+| Stat             | Mechanics                                                    | Impact                                                          |
+| ---------------- | ------------------------------------------------------------ | --------------------------------------------------------------- |
+| **Hunger**       | +3% every 3 seconds (+2% while asleep).                      | Above 70% he is "Miserable", can't talk, and loses happiness faster. |
+| **Happiness**    | -2% every 3 seconds (-3% while hunger is above 70%).         | Below 30% he is "Miserable".                                    |
+| **Energy**       | -5% every 6 seconds awake, +10% every 3 seconds asleep.      | Hitting 0% collapses him into sleep; he wakes by himself at 100%. |
+| **Cache Buffer** | +1 per cookie, only emptied by the toilet.                   | 80 units: warnings. 100 units: system panic and everything locks except `[t]`. |
+
+Weight follows the buffer: one level per 20 cookies.
 
 ---
 
-## 🎮 Keybindings Directory
+## 🎮 Keybindings
 
-### Core Interaction Layer
-* `[f]` **Feed Engine:** Reduces hunger by 20%, increases feed count/buffer, and temporarily shifts head geometry into eating mode (`🍪`).
-* `[p]` **Pet Protocol:** Boosts happiness by 15% and displays optimization love text.
-* `[s]` **Speak Routine:** Triggers a fast text pipe directly to your local system's `fortune` database binary to output short text parameters.
-* `[t]` **Flush Buffer:** Forces a toilet break, resets current internal feed cycles back to baseline, and clears any physical system expansion (weight calculations).
+### Core Interaction
+
+- `[f]` **Feed:** Reduces hunger by 20%, +5% happiness, adds 1 to the buffer.
+- `[p]` **Pet:** +15% happiness.
+- `[s]` **Speak:** Puchi shares a short `fortune` (or a built-in line if `fortune` isn't installed). The text stays on screen until something else happens.
+- `[t]` **Flush Buffer:** Toilet break; resets the buffer and his weight. Works even on a sleeping Puchi when the buffer is completely full.
 
 ### Active Routines
-* `[d]` **Dance Frame:** Triggers an animated, multi-frame layout shift across tracking loops. (Requires >20% Energy).
-* `[b]` **Bath Cycle:** Cleanses bytecode structures while triggering floating bubble graphics across the visual window.
-* `[e]` **Power Toggle:** Gracefully lets Puchi go to sleep to recover energy, or forces him awake into an angry routine (`╬◣_◢`).
+
+- `[d]` **Dance:** Animated dance, -8% energy. Needs at least 20% energy.
+- `[b]` **Bath:** Bubbles! +10% happiness, -5% energy.
+- `[e]` **Power Toggle:** Sends him to bed - or wakes him up into a grumpy routine (`╬◣_◢`, -25% happiness).
 
 ### System Modes
-* `[l]` **Loaf Mode (Autopilot):** Handover control loop to internal AI automation logic. Puchi handles his own eating, sleeping, maintenance, and bathroom cache flushing based on immediate structural stat hazards.
-* `[c]` **Style Wardrobe:** Suspends baseline tasks to reconfigure accessories:
+
+- `[l]` **Loaf Mode (Autopilot):** Puchi looks after himself: flushes before the buffer gets dangerous, eats, naps, showers, plays and redresses. If you close the program in Loaf Mode he still looks after himself while you're gone.
+- `[c]` **Style Wardrobe:** Pause everything else and dress him up:
   * `[1]` Brush Teeth
   * `[2]` Cycle Hair (Bald 🥚, Punk Fringe ⚡, Top Hat 🎩, Headband 🎗️)
   * `[3]` Cycle Apparel (Suit 🐳, Jacket 🧥, Tuxedo 👔, Scarf 🧣)
-  * `[c / Esc]` Exit setup loop back to monitoring screen.
-* `[q / Ctrl+C]` **Kill Switch:** Gracefully exits the binary runtime and cleans the terminal shell.
+  * `[c / Esc]` Back to monitoring.
+- `[q / Ctrl+C]` **Quit:** saves and exits.
 
 ---
 
-## 🧬 Engineering & Layout Details
+## 💾 He remembers
 
-* **Dynamic Alignment:** Accessory graphics utilize real-time cell width evaluations to dynamically snap directly over Puchi's head coordinate boundaries, preventing string layout shifting during asymmetric facial modifications.
-* **Proactive Caching:** In Loaf mode, the internal cron logic detects buffer pressure hazards at `80%` capacities and automatically diverts routines to execute system flushes before encountering hard panics.
+Puchi's state is saved to `~/.local/state/terminal-pet/puchi.json` (or `$XDG_STATE_HOME/terminal-pet/puchi.json`) every 30 seconds and on quit. When you come back, the time you were away counts - gently: up to 12 hours of it, at a much slower pace than live decay. A corrupt save is kept as `puchi.json.bak` and Puchi starts fresh.
+
+```
+pet              # normal run
+pet --reset      # start over with a brand-new Puchi
+pet --no-save    # don't load or save anything
+pet --inline     # draw in the normal screen instead of the alternate screen
+```
 
 ---
 
-## ✨ Features
+## 🧬 Engineering Notes
 
-* **Zero Flicker:** Uses double-buffering terminal rendering for buttery-smooth animations.
-* **Low Footprint:** Compiles into a single native binary with near 0% CPU idle usage.
-* **Fortune-Powered:** Pressing `s` makes Puchi speak short quotes directly from your system's `fortune` database.
-* **Persistent Speech:** Text wraps safely downward and freezes on screen so you can read fortunes completely at your own pace without jittering the layout walls.
+- **Brain / body split:** `internal/pet` holds all the rules (stats, activities, autopilot, persistence) with no UI imports and is covered by unit tests; `main.go` and `view.go` are a thin Bubble Tea layer on top.
+- **Activities are an enum**, not a pile of booleans, so Puchi can never be dancing and bathing at once.
+- **Deterministic time:** a single 250ms tick drives animation *and* a 3s status heartbeat, so stat decay can't drift against the animation clock.
+- **Non-blocking fortunes:** `fortune` runs as an async command with a 2s timeout - the UI never freezes waiting for it.
+- **Stable layout:** the hat area and speech bubble have fixed minimum heights, so changing hairstyle doesn't make the frame jump; the frame is centred in the terminal and a "terminal too small" notice is shown if it doesn't fit.
 
 ---
 
@@ -71,61 +79,34 @@ Puchi's life cycle operates across four balancing system registers that shift ov
 
 ### 1. Prerequisites
 
-Make sure you have `go` and the `fortune` database installed on your system:
+You need `go`. The `fortune` database is optional but makes him chattier:
 
-* **Arch Linux:**
-```
-  sudo pacman -S go fortune-mod
-```
-* **Debian / Ubuntu:**
+- **Arch / EndeavourOS:** `sudo pacman -S go fortune-mod`
+- **Debian / Ubuntu:** `sudo apt install golang-go fortune-mod fortunes-min`
 
-```
-  sudo apt update
-```
-```
-  sudo apt install golang-go fortune-mod fortunes-min -y
-```
-
-2. Clone & Run
-Clone the repository:
+### 2. Clone, build, run
 
 ```
 git clone https://github.com/HonourableAF/terminal-pet.git
-```
-Move into the project directory:
-
-```
 cd terminal-pet
+go build -ldflags="-s -w" -o pet .
+./pet
 ```
-Build the optimized binary:
+
+To run it from anywhere without sudo (make sure `~/.local/bin` is on your `PATH`):
 
 ```
-go build -o pet main.go
+mkdir -p ~/.local/bin
+cp pet ~/.local/bin/
 ```
-Move it to your global binaries path so it can be run from anywhere (this will request your sudo password to securely link the file):
-```
-sudo cp pet /usr/local/bin/
-```
-Now you're completely set... LAUNCH!!!!
+
+### 3. Develop
 
 ```
-pet
+go vet ./...
+go test ./...
 ```
 
 ## 🪟 Windows Installation (via WSL)
-If you are on Windows, you can run Puchi inside a native Linux environment using the Windows Subsystem for Linux (WSL).
 
-### Step 1: Open WSL
-Open your preferred terminal app (like Windows Terminal or PowerShell) and boot into your Linux system environment:
-
-```
-wsl
-```
-### Step 2: Environment Setup
-If you don't have a Linux distribution set up inside WSL yet, install a clean standard distribution (like Ubuntu or Debian) from the Microsoft Store or via command line, then access its terminal shell.
-
-### Step 3: Global Installation
-Once inside your WSL Linux terminal prompt, simply follow the standard Linux Installation instructions above to update your packages, build the code, and link the binary!
-
-Once copied to /usr/local/bin/, typing pet inside your WSL environment will instantly wake your buddy up.
-
+Open a terminal and run `wsl`. If you don't have a Linux distribution yet, install Ubuntu or Debian from the Microsoft Store first. Then follow the Linux instructions above inside WSL.
