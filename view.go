@@ -61,6 +61,7 @@ func (m *model) body() string {
 		statLine("Hunger:", p.Hunger, true),
 		statLine("Happiness:", p.Happiness, false),
 		statLine("Energy:", p.Energy, false),
+		bondLine(p),
 		"",
 		statusStyle.Render(pad("Emotion: "+emotion, 24) + "Weight: " + weight),
 	}, "\n"))
@@ -115,7 +116,18 @@ func mood(p *pet.Pet) (emotion, face string) {
 		return "Loafing 🍞", "(っ- ‿ -)っ"
 	case p.Miserable():
 		return "Miserable 😭", "(; ﹏ ;)"
-	case p.Blinking():
+	}
+
+	switch p.Tier() {
+	case pet.Adores:
+		if p.Blinking() {
+			return "Adoring 🥰", "(- ‿ -) ♡"
+		}
+		return "Adoring 🥰", "(♡ ‿ ♡)"
+	case pet.Hates:
+		return "Sulking 😒", "(¬ _ ¬)"
+	}
+	if p.Blinking() {
 		return "Content 😐", "(- ‿ -)"
 	}
 	return "Content 😐", "(^ ‿ ^)"
@@ -186,6 +198,39 @@ func statLine(label string, value int, higherIsWorse bool) string {
 	return statusStyle.Render(fmt.Sprintf("%-11s[", label)) +
 		lipgloss.NewStyle().Foreground(color).Render(bar) +
 		statusStyle.Render(fmt.Sprintf("] %3d%%", value))
+}
+
+var tierLabel = map[pet.Tier]string{
+	pet.Hates:    "Hates you 💔",
+	pet.Dislikes: "Dislikes you 😒",
+	pet.Neutral:  "Neutral 😐",
+	pet.Likes:    "Likes you 😊",
+	pet.Adores:   "Adores you 💖",
+}
+
+// bondLine draws how Puchi feels about you as a bar that grows left (red) from
+// the centre mark when he dislikes you and right (pink) when he likes you.
+func bondLine(p *pet.Pet) string {
+	const half = 6
+	n := (abs(p.Bond)*half + 50) / 100 // rounded cells
+	left, right := strings.Repeat(" ", half), strings.Repeat(" ", half)
+	hate := lipgloss.NewStyle().Foreground(lipgloss.Color("203"))
+	love := lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
+	if p.Bond < 0 {
+		left = strings.Repeat(" ", half-n) + hate.Render(strings.Repeat("█", n))
+	} else {
+		right = love.Render(strings.Repeat("█", n)) + strings.Repeat(" ", half-n)
+	}
+	return statusStyle.Render(fmt.Sprintf("%-11s[", "Bond:")) + left +
+		statusStyle.Render("│") + right +
+		statusStyle.Render(fmt.Sprintf("] %+4d  ", p.Bond)+pad(tierLabel[p.Tier()], 15))
+}
+
+func abs(v int) int {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
 
 // alt alternates between two animation frames.

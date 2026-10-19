@@ -1,6 +1,6 @@
 # 🐾 Puchi - The Ultimate Terminal Pet
 
-An interactive, keyboard-driven retro tamagotchi clone built entirely inside the terminal using Go (`Bubble Tea` & `LipGloss`). Puchi has live stats, a state machine, an autopilot ("Loaf Mode"), a wardrobe, and he **remembers you** - his state is saved between sessions, and he notices when you've been away.
+An interactive, keyboard-driven retro tamagotchi clone built entirely inside the terminal using Go (`Bubble Tea` & `LipGloss`). Puchi has live stats, a state machine, an autopilot ("Loaf Mode"), a wardrobe, and **opinions about you**: treat him well and he adores you, treat him badly and he hates you. Quitting doesn't reset him - he's exactly as you left him, minus the time you were gone.
 
 ## 📸 System Preview
 
@@ -19,6 +19,7 @@ Puchi's life cycle runs on a 3-second heartbeat:
 | **Hunger**       | +3% every 3 seconds (+2% while asleep).                      | Above 70% he is "Miserable", can't talk, and loses happiness faster. |
 | **Happiness**    | -2% every 3 seconds (-3% while hunger is above 70%).         | Below 30% he is "Miserable".                                    |
 | **Energy**       | -5% every 6 seconds awake, +10% every 3 seconds asleep.      | Hitting 0% collapses him into sleep; he wakes by himself at 100%. |
+| **Bond** | -100 (hates you) to +100 (adores you). Starts neutral; see below. | Changes his face, and whether he lets you pet or talk to him. |
 | **Cache Buffer** | +1 per cookie, only emptied by the toilet.                   | 80 units: warnings. 100 units: system panic and everything locks except `[t]`. |
 
 Weight follows the buffer: one level per 20 cookies.
@@ -52,14 +53,35 @@ Weight follows the buffer: one level per 20 cookies.
 
 ---
 
-## 💾 He remembers
+## 💞 Does Puchi like you?
 
-Puchi's state is saved to `~/.local/state/terminal-pet/puchi.json` (or `$XDG_STATE_HOME/terminal-pet/puchi.json`) every 30 seconds and on quit. When you come back, the time you were away counts - gently: up to 12 hours of it, at a much slower pace than live decay. A corrupt save is kept as `puchi.json.bak` and Puchi starts fresh.
+The **Bond** bar shows how he feels about you, from `Hates you 💔` through `Dislikes`, `Neutral` and `Likes` to `Adores you 💖`.
+
+**Looking after him earns affection** (at most once every 4 seconds, so mashing a key doesn't work):
+
+- Feeding him when he's actually hungry: +3 (a snack: +1)
+- Petting him: +2 - dancing, baths, tooth-brushing, and flushing the buffer when it's getting full: +1 to +2
+
+**Mistreating him costs it:**
+
+- Letting him stay hungry (over 70%) or miserable: about -5 per minute, doubled while he's starving (90%+)
+- Stuffing him when he isn't hungry: -2
+- Overfeeding him all the way to the system panic: -10
+- Waking him up: -5
+- Staying away for hours: -1 per 2 hours, capped at -6 (Loaf Mode doesn't count as neglect - he's looking after himself)
+
+**It shows:** an adored Puchi has hearts in his eyes and enjoys being petted more. A Puchi who hates you sulks, dodges your hand, and gives you the silent treatment - but he'll still eat what you feed him, so you can win him back.
+
+## 💾 There is no escape
+
+Press `q` and Puchi is saved exactly as he is - hunger, happiness, energy, weight, outfit, Loaf Mode and bond - to `~/.local/state/terminal-pet/puchi.json` (or `$XDG_STATE_HOME/terminal-pet/puchi.json`). He is also saved every 30 seconds in case of a crash. Restarting doesn't reset him, and neither does a full buffer.
+
+The time you were gone counts too (gently, and capped at 12 hours): he comes back hungrier, lonelier and less happy, never dead. A sleeping Puchi rests while you're away, and a Puchi on autopilot looks after himself. A corrupt save is kept as `puchi.json.bak` and Puchi starts fresh.
 
 ```
 pet              # normal run
-pet --reset      # start over with a brand-new Puchi
-pet --no-save    # don't load or save anything
+pet --reset      # abandon the saved Puchi and start over with a new one
+pet --no-save    # a throwaway session: don't load or save anything
 pet --inline     # draw in the normal screen instead of the alternate screen
 ```
 
@@ -67,7 +89,7 @@ pet --inline     # draw in the normal screen instead of the alternate screen
 
 ## 🧬 Engineering Notes
 
-- **Brain / body split:** `internal/pet` holds all the rules (stats, activities, autopilot, persistence) with no UI imports and is covered by unit tests; `main.go` and `view.go` are a thin Bubble Tea layer on top.
+- **Brain / body split:** `internal/pet` holds all the rules (stats, activities, autopilot, bond, saving and offline catch-up) with no UI imports and is covered by unit tests; `main.go` and `view.go` are a thin Bubble Tea layer on top.
 - **Activities are an enum**, not a pile of booleans, so Puchi can never be dancing and bathing at once.
 - **Deterministic time:** a single 250ms tick drives animation *and* a 3s status heartbeat, so stat decay can't drift against the animation clock.
 - **Non-blocking fortunes:** `fortune` runs as an async command with a 2s timeout - the UI never freezes waiting for it.

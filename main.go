@@ -155,8 +155,8 @@ func (m *model) handleStyleKey(key string) {
 }
 
 func main() {
-	reset := flag.Bool("reset", false, "start over with a brand-new Puchi (replaces the saved one on exit)")
-	noSave := flag.Bool("no-save", false, "don't load or save Puchi's state")
+	reset := flag.Bool("reset", false, "abandon the saved Puchi and start over with a new one")
+	noSave := flag.Bool("no-save", false, "don't load or save Puchi (a throwaway session)")
 	inline := flag.Bool("inline", false, "draw in the normal screen instead of the alternate screen")
 	flag.Parse()
 

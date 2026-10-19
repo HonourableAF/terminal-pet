@@ -114,3 +114,54 @@ func TestTooSmallTerminal(t *testing.T) {
 		t.Fatal("large terminal should render Puchi")
 	}
 }
+
+func TestBondBarReflectsTheRelationship(t *testing.T) {
+	m := testModel()
+	m.inline = true
+	for _, bond := range []int{-100, -60, -7, 0, 7, 20, 60, 100} {
+		m.pet.Bond = bond
+		view := m.View()
+		if !strings.Contains(view, "Bond:") || !strings.Contains(view, "│") {
+			t.Fatalf("bond %d: no bond bar in view", bond)
+		}
+		for _, line := range strings.Split(view, "\n") {
+			if lipgloss.Width(line) > frameWidth+2 {
+				t.Fatalf("bond %d overflows the frame: %q", bond, line)
+			}
+		}
+	}
+	m.pet.Bond = 100
+	if !strings.Contains(m.View(), "Adores you") {
+		t.Fatal("expected the tier label")
+	}
+	m.pet.Bond = -100
+	if !strings.Contains(m.View(), "Hates you") {
+		t.Fatal("expected the tier label")
+	}
+}
+
+func TestHatedPuchiDodgesPetting(t *testing.T) {
+	m := testModel()
+	m.pet.Bond = -90
+	press(m, "p")
+	if !strings.Contains(m.View(), "dodges") {
+		t.Fatal("expected Puchi to dodge")
+	}
+}
+
+func TestLayoutDoesNotShiftWhenTheTierChanges(t *testing.T) {
+	m := testModel()
+	m.inline = true
+	col := -1
+	for _, bond := range []int{-100, -40, 0, 40, 100} {
+		m.pet.Bond = bond
+		for _, line := range strings.Split(m.View(), "\n") {
+			if i := strings.Index(line, "Bond:"); i >= 0 {
+				if col >= 0 && i != col {
+					t.Fatalf("bond %d moved the bar from column %d to %d", bond, col, i)
+				}
+				col = i
+			}
+		}
+	}
+}
